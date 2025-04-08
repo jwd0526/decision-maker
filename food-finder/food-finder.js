@@ -313,11 +313,28 @@ async function findOpenRestaurants(apiKey, zipcode, radiusMiles, searchTerm = nu
   return restaurants;
 }
 
-// Export to JSON file
+// Export to JSON file - Use /tmp directory for serverless functions
 function exportToJSON(data, filename) {
   try {
-    fs.writeFileSync(filename, JSON.stringify(data, null, 4), 'utf8');
-    console.log(`Data successfully exported to ${filename}`);
+    // For serverless environments, use the /tmp directory
+    const tempDir = process.env.VERCEL ? '/tmp' : process.cwd();
+    const filePath = path.join(tempDir, filename);
+    
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 4), 'utf8');
+    console.log(`Data successfully exported to ${filePath}`);
+    
+    // If we're in a Vercel environment, also try to write to the expected location
+    // This might fail, but we'll have the /tmp backup
+    if (process.env.VERCEL) {
+      try {
+        const originalPath = path.join(process.cwd(), filename);
+        fs.writeFileSync(originalPath, JSON.stringify(data, null, 4), 'utf8');
+        console.log(`Also wrote data to ${originalPath}`);
+      } catch (error) {
+        console.log(`Could not write to ${process.cwd()}, using /tmp only`);
+      }
+    }
+    
     return true;
   } catch (error) {
     console.error(`Error exporting data to JSON: ${error.message}`);

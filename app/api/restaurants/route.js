@@ -25,7 +25,7 @@ export async function POST(request) {
     // Build the command with environment variable
     const scriptPath = path.join(process.cwd(), 'food-finder', 'food-finder.js');
     // Make sure the script writes to the root directory's results.json
-    const command = `GOOGLE_PLACES_API_KEY="${apiKey}" node ${scriptPath} --zipcode ${zipCode} --radius ${searchRadius} --search ${category.toLowerCase()} --price-level ${googlePriceLevel} && mv ${path.join(process.cwd(), 'food-finder', 'results.json')} ${path.join(process.cwd(), 'results.json')} 2>/dev/null || true`;
+    const command = `GOOGLE_PLACES_API_KEY="${apiKey}" node ${scriptPath} --zipcode ${zipCode} --radius ${searchRadius} --search ${category.toLowerCase()} --price-level ${googlePriceLevel}`;
     
     console.log(`Executing command: ${command}`);
     
@@ -39,9 +39,9 @@ export async function POST(request) {
     console.log(`Python script output: ${stdout}`);
     
     // Read the results from the JSON file in the root directory
-    const resultsPath = path.join(process.cwd(), 'results.json');
+    const tempDir = process.env.VERCEL ? '/tmp' : process.cwd();
+    const resultsPath = path.join(tempDir, 'results.json');
     const jsonData = fs.readFileSync(resultsPath, 'utf8');
-    const results = JSON.parse(jsonData);
     
     // Pull out just the restaurant data
     const restaurants = results.restaurants.map(restaurant => ({
