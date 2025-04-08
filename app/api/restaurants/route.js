@@ -29,19 +29,31 @@ export async function POST(request) {
     
     console.log(`Executing command: ${command}`);
     
-    // Execute the Python script
+    // Execute the script
     const { stdout, stderr } = await execPromise(command);
     
     if (stderr) {
       console.error(`Script error: ${stderr}`);
     }
     
-    console.log(`Python script output: ${stdout}`);
+    console.log(`Script output: ${stdout}`);
     
-    // Read the results from the JSON file in the root directory
+    // Read the results from the JSON file
     const tempDir = process.env.VERCEL ? '/tmp' : process.cwd();
     const resultsPath = path.join(tempDir, 'results.json');
+    
+    // Check if the file exists before reading it
+    if (!fs.existsSync(resultsPath)) {
+      console.error(`Results file not found at path: ${resultsPath}`);
+      // Fall back to mock data if the file doesn't exist
+      const mockRestaurants = getMockRestaurants(mealType, category, zipCode, priceLevel);
+      return NextResponse.json({ restaurants: mockRestaurants });
+    }
+    
     const jsonData = fs.readFileSync(resultsPath, 'utf8');
+    
+    // Parse the JSON data into an object
+    const results = JSON.parse(jsonData);
     
     // Pull out just the restaurant data
     const restaurants = results.restaurants.map(restaurant => ({
@@ -52,14 +64,18 @@ export async function POST(request) {
       price_level_numeric: restaurant.price_level_numeric,
       rating: restaurant.rating,
       distance: restaurant.distance_miles,
-      isOpen: true, // The Python script already filters for open restaurants
+      isOpen: true, // The script already filters for open restaurants
     }));
 
     return NextResponse.json({ restaurants });
   } catch (error) {
     console.error('Error processing request:', error);
+    console.error(error.stack);
     
-    // Return mock data as fallback
+    // Return mock data as fallback with the provided parameters
+    const { mealType, category, zipCode, priceLevel } = 
+      request.body ? await request.json() : { mealType: 'lunch', category: 'American', zipCode: '10001', priceLevel: 2 };
+    
     const mockRestaurants = getMockRestaurants(mealType, category, zipCode, priceLevel);
     return NextResponse.json({ restaurants: mockRestaurants });
   }
