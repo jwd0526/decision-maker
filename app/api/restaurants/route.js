@@ -23,9 +23,9 @@ export async function POST(request) {
     }
     
     // Build the command with environment variable
-    const scriptPath = path.join(process.cwd(), 'food-finder', 'food-finder.py');
+    const scriptPath = path.join(process.cwd(), 'food-finder', 'food-finder.js');
     // Make sure the script writes to the root directory's results.json
-    const command = `GOOGLE_PLACES_API_KEY="${apiKey}" python3 ${scriptPath} --zipcode ${zipCode} --radius ${searchRadius} --search ${category.toLowerCase()} --price-level ${googlePriceLevel} && mv ${path.join(process.cwd(), 'food-finder', 'results.json')} ${path.join(process.cwd(), 'results.json')} 2>/dev/null || true`;
+    const command = `GOOGLE_PLACES_API_KEY="${apiKey}" node ${scriptPath} --zipcode ${zipCode} --radius ${searchRadius} --search ${category.toLowerCase()} --price-level ${googlePriceLevel} && mv ${path.join(process.cwd(), 'food-finder', 'results.json')} ${path.join(process.cwd(), 'results.json')} 2>/dev/null || true`;
     
     console.log(`Executing command: ${command}`);
     
