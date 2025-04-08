@@ -1,0 +1,11 @@
+node_modules
+.next
+*/venv
+results.json
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+app_doc.txt
+document-app.sh
