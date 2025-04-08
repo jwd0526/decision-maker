@@ -5,17 +5,37 @@ const https = require('https');
 const { execSync } = require('child_process');
 const path = require('path');
 
-// CLI arguments parsing
-const argv = require('minimist')(process.argv.slice(2), {
-  string: ['zipcode', 'search'],
-  number: ['radius', 'price-level'],
-  alias: {
-    z: 'zipcode',
-    r: 'radius',
-    s: 'search',
-    p: 'price-level'
+// Simple CLI arguments parsing without dependencies
+function parseArgs() {
+  const args = {};
+  const argv = process.argv.slice(2);
+  
+  for (let i = 0; i < argv.length; i++) {
+    // Handle --key=value format
+    if (argv[i].includes('=')) {
+      const parts = argv[i].split('=');
+      const key = parts[0].replace(/^--/, '');
+      args[key] = parts[1];
+      continue;
+    }
+    
+    // Handle --key value format
+    if (argv[i].startsWith('--')) {
+      const key = argv[i].replace(/^--/, '');
+      const value = argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : true;
+      args[key] = value;
+      if (value !== true) i++; // Skip the next item since we used it as a value
+    }
   }
-});
+  
+  // Convert numeric values
+  if (args.radius) args.radius = parseFloat(args.radius);
+  if (args['price-level']) args['price-level'] = parseInt(args['price-level'], 10);
+  
+  return args;
+}
+
+const argv = parseArgs();
 
 // Check for required arguments
 if (!argv.zipcode) {
@@ -27,6 +47,8 @@ if (!argv.radius) {
   console.error('Error: --radius argument is required');
   process.exit(1);
 }
+
+console.log("Command line arguments:", argv);
 
 // Helper function to make HTTP requests
 function makeRequest(url) {
